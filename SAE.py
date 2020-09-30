@@ -67,16 +67,15 @@ class Stacked_AEC:
                 model = self.createModel(INPUT,HID, i+1)
                 #SET the other wts
                 wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, self.values[i-1])
+                # wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, None)
                 weights.append(wts[0])
                 weights.append(wts[1])
                 # SET all wts at once
                 model.set_weights(weights)
-
-                # opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) 
                 model.compile(loss=loss, optimizer=opt) 
                 
                 # FIT THE NETWORK WITH THE PREVIOUSLY PREDICTED OUTPUT VALUES
-                hist = model.fit(self.values[i-1], train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X,test_y))
+                hist = model.fit(train_X, train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X,test_y))
 
                 self.values.append(model.predict(self.values[i-1], batch_size=batch_size))
             ########################################################
@@ -91,7 +90,6 @@ class Stacked_AEC:
         weights.append(wts[1])
         # SET all wts at once
         model.set_weights(weights)
-        # opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) # 1e-5
         model.compile(loss=loss, optimizer=opt) 
 
         hist = model.fit(train_X, train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X,test_y)) 
