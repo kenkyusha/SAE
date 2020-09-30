@@ -20,17 +20,35 @@ class Stacked_AEC:
         self.SAVE_WTS = save_wts
         self.mode = mode
         self.dir_name = save_dir
+        self._mkdirs()
 
-    def fit(self, train_X, train_y, test_X, test_y, depth, epochs, lr_rate, batch_size=100):
+    def _mkdirs(self):
+        try:
+            print('Creating dir {}'.format(self.dir_name))
+            os.mkdir(self.dir_name)
+        except:
+            print('{} already exist'.format(self.dir_name))
+
+    def fit(self, train_X, train_y, test_X, test_y, depth, epochs, lr_rate, batch_size=100, opti='SGD', loss='mse'):
         INPUT = train_X.shape[1]
         HID = OUTPUT = train_y.shape[1]
         self.lr_rate = lr_rate
         self.epochs = epochs
-        start_time = time.time()
+
+        if opti == 'SGD':
+            # default == SGD
+            opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False)
+        elif opt == 'Adam':
+            opt = Adam(lr=self.lr_rate)
+        else:
+            # Custom passed optimizer from outside
+            opt = opti
+
         # RUN TRAINING LOOP OVER THE DEPTH
         weights = []
+        start_time = time.time()
         for i in range(depth):
-            print("Starting training NN with {} layer...".format(i+1))
+            print('Starting training NN with {} layer...'.format(i+1))
             if i==0:
                 model = self.createModel(INPUT,HID, i+1)
                 wts = self.init_fun(self.mode, INPUT, HID, test_X, train_y)
@@ -38,8 +56,8 @@ class Stacked_AEC:
                 weights.append(wts[1])
                 model.set_weights(weights) # IDENTIT
                 # print('hi')
-                opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) # 1e-5
-                model.compile(loss='mse', optimizer=opt) 
+                
+                model.compile(loss=loss, optimizer=opt) 
                 
                 hist = model.fit(train_X, train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X, test_y)) 
                 # STORE PREDICTED VALUES FROM FIRST NETWORK
@@ -54,8 +72,8 @@ class Stacked_AEC:
                 # SET all wts at once
                 model.set_weights(weights)
 
-                opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) 
-                model.compile(loss="mse", optimizer=opt) 
+                # opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) 
+                model.compile(loss=loss, optimizer=opt) 
                 
                 # FIT THE NETWORK WITH THE PREVIOUSLY PREDICTED OUTPUT VALUES
                 hist = model.fit(self.values[i-1], train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X,test_y))
@@ -65,7 +83,7 @@ class Stacked_AEC:
             weights = model.get_weights()
             self.tr_error.append(hist.history)
         # FINE-TUNE THE FINALS LAYERS
-        print("{} layers are trained, adding final layer and fine-tuning all the {} layers".format(depth, depth+1))
+        print('{} layers are trained, adding final layer and fine-tuning all the {} layers'.format(depth, depth+1))
         model = self.createModel(INPUT,HID, depth+1)
         wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, self.values[i-1])
 
@@ -73,8 +91,8 @@ class Stacked_AEC:
         weights.append(wts[1])
         # SET all wts at once
         model.set_weights(weights)
-        opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) # 1e-5
-        model.compile(loss="mse", optimizer=opt) 
+        # opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) # 1e-5
+        model.compile(loss=loss, optimizer=opt) 
 
         hist = model.fit(train_X, train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X,test_y)) 
         # STORE FINAL WEIGHTS
@@ -82,16 +100,16 @@ class Stacked_AEC:
 
         self.tr_error.append(hist.history)
         elapsed_time = time.time() - start_time
-        print("Training completed with ~ {} seconds".format(round(elapsed_time)))
+        print('Training completed with ~ {} seconds'.format(round(elapsed_time)))
         self.plot_training()
 
     def plot_training(self):
-        print("Plotting graph...")
+        print('Plotting graph...')
         tr_loss = []
         val_loss = []
         for d in self.tr_error:
-            tr_loss.append(d["loss"])
-            val_loss.append(d["val_loss"])
+            tr_loss.append(d['loss'])
+            val_loss.append(d['val_loss'])
 
         # h = range(0, 2400+epoch)
         z = np.array(tr_loss[:]) # TRAINING LOSS
@@ -99,13 +117,13 @@ class Stacked_AEC:
         v1 = np.concatenate(np.array(val_loss[:])) #VALIDATION LOSS
 
         fig, ax = plt.subplots( nrows=1, ncols=1 )  # create figure & 1 axis
-        ax.plot(z1, label = "Training error")
-        ax.plot(v1, 'r', label = "Validation error")
+        ax.plot(z1, label = 'Training error')
+        ax.plot(v1, 'r', label = 'Validation error')
         legend = ax.legend(loc='upper right', shadow=True)
 
-        plt.title("{} init lr = {}".format(self.mode, self.lr_rate))
-        plt.ylabel("Training Error")
-        plt.xlabel("nr of epoch") 
+        plt.title('{} init lr = {}'.format(self.mode, self.lr_rate))
+        plt.ylabel('Training Error')
+        plt.xlabel('nr of epoch') 
 
         fig.savefig(self.dir_name+'/full_{}_epoch_{}_lr_{}.png'.format(self.mode, self.epochs*5, self.lr_rate))
         if self.SAVE_WTS:
