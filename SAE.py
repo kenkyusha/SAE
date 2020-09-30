@@ -51,7 +51,7 @@ class Stacked_AEC:
             print('Starting training NN with {} layer...'.format(i+1))
             if i==0:
                 model = self.createModel(INPUT,HID, i+1)
-                wts = self.init_fun(self.mode, INPUT, HID, test_X, train_y)
+                wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, None)
                 weights.append(wts[0])
                 weights.append(wts[1])
                 model.set_weights(weights) # IDENTIT
@@ -66,7 +66,7 @@ class Stacked_AEC:
             elif i > 0:
                 model = self.createModel(INPUT,HID, i+1)
                 #SET the other wts
-                wts = self.init_fun(self.mode, INPUT, HID, test_X, train_y, self.values[i-1])
+                wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, self.values[i-1])
                 weights.append(wts[0])
                 weights.append(wts[1])
                 # SET all wts at once
