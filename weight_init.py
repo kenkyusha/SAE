@@ -26,8 +26,6 @@ def leastsq_init(X, y, predict=None):
     mean_freeY = y - S_avg
 
     # REMOVE MEAN FROM DATA
-    # pdb.set_trace()
-    # if predict == None:
     try:
         predict.shape
         X_avg = predict.mean(axis=0)

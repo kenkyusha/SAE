@@ -38,7 +38,7 @@ class Stacked_AEC:
         if opti == 'SGD':
             # default == SGD
             opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False)
-        elif opt == 'Adam':
+        elif opti == 'Adam':
             opt = Adam(lr=self.lr_rate)
         else:
             # Custom passed optimizer from outside
@@ -55,7 +55,6 @@ class Stacked_AEC:
                 weights.append(wts[0])
                 weights.append(wts[1])
                 model.set_weights(weights) # IDENTIT
-                # print('hi')
                 
                 model.compile(loss=loss, optimizer=opt) 
                 
@@ -67,11 +66,12 @@ class Stacked_AEC:
                 model = self.createModel(INPUT,HID, i+1)
                 #SET the other wts
                 wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, self.values[i-1])
-                # wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, None)
                 weights.append(wts[0])
                 weights.append(wts[1])
                 # SET all wts at once
                 model.set_weights(weights)
+
+                # opt = SGD(lr=self.lr_rate, decay=0.0, momentum=0.9, nesterov=False) 
                 model.compile(loss=loss, optimizer=opt) 
                 
                 # FIT THE NETWORK WITH THE PREVIOUSLY PREDICTED OUTPUT VALUES
@@ -85,6 +85,7 @@ class Stacked_AEC:
         print('{} layers are trained, adding final layer and fine-tuning all the {} layers'.format(depth, depth+1))
         model = self.createModel(INPUT,HID, depth+1)
         wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, self.values[i-1])
+        # wts = self.init_fun(self.mode, INPUT, HID, train_X, train_y, None)
 
         weights.append(wts[0])
         weights.append(wts[1])
