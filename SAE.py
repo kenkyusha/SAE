@@ -7,12 +7,13 @@ from keras.optimizers import Adam, SGD
 import time
 import numpy as np
 import pdb
+import os
 
 
 class Stacked_AEC:
     ''' This is an implementation of layer-wise training for a stacked auto-encoder'''
 
-    def __init__(self, save_dir, mode = 'Identity', save_wts = False):
+    def __init__(self, save_dir='.', mode = 'Identity', save_wts = False):
         self.weights = []
         self.values = []
         self.pred_val = []
@@ -20,9 +21,9 @@ class Stacked_AEC:
         self.SAVE_WTS = save_wts
         self.mode = mode
         self.dir_name = save_dir
-        self._mkdirs()
+        self.mkdirs()
 
-    def _mkdirs(self):
+    def mkdirs(self):
         try:
             print('Creating dir {}'.format(self.dir_name))
             os.mkdir(self.dir_name)
@@ -96,6 +97,7 @@ class Stacked_AEC:
         hist = model.fit(train_X, train_y, epochs=self.epochs, batch_size=batch_size, validation_data=(test_X,test_y)) 
         # STORE FINAL WEIGHTS
         self.weights = model.get_weights()
+        self.model = model
 
         self.tr_error.append(hist.history)
         elapsed_time = time.time() - start_time
